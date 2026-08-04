@@ -38,7 +38,7 @@ project.version = "${SRU}-${scmVersion.version}"
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(11))
+        languageVersion.set(JavaLanguageVersion.of(21))
     }
 }
 
@@ -94,8 +94,8 @@ tasks.withType(Jar).configureEach {
         'Implementation-Version': project.version,
         'Implementation-Vendor': 'www.prowidesoftware.com',
         'Built-OS': System.getProperty('os.name'),
-        'Source-Compatibility': JavaVersion.VERSION_11,
-        'Target-Compatibility': JavaVersion.VERSION_11,
+        'Source-Compatibility': JavaVersion.VERSION_21,
+        'Target-Compatibility': JavaVersion.VERSION_21,
         'Built-Date': new Date().format("yyyy-MM-dd"),
         'Automatic-Module-Name': 'com.prowidesoftware.core'
     )
