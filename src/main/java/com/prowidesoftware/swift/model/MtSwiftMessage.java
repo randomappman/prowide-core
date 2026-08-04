@@ -15,10 +15,8 @@
  */
 package com.prowidesoftware.swift.model;
 
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.prowidesoftware.swift.io.ConversionService;
 import com.prowidesoftware.swift.model.mt.AbstractMT;
 import com.prowidesoftware.swift.model.mt.DefaultMtMetadataStrategy;
@@ -231,12 +229,13 @@ public class MtSwiftMessage extends AbstractSwiftMessage {
      * @since 7.10.3
      */
     public static MtSwiftMessage fromJson(String json) {
-        JsonElement element = JsonParser.parseString(json);
-        GsonBuilder builder = new GsonBuilder();
-        if (element.isJsonObject() && hasNewCalendarFormat(element.getAsJsonObject())) {
-            builder.registerTypeHierarchyAdapter(Calendar.class, CalendarTypeAdapter.INSTANCE);
+        try {
+            JsonNode element = CalendarTypeAdapter.mapper(false).readTree(json);
+            boolean oneBasedMonths = element.isObject() && hasNewCalendarFormat(element);
+            return CalendarTypeAdapter.mapper(oneBasedMonths).treeToValue(element, MtSwiftMessage.class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Cannot parse JSON into a message object", e);
         }
-        return builder.create().fromJson(element, MtSwiftMessage.class);
     }
 
     /**
@@ -247,15 +246,12 @@ public class MtSwiftMessage extends AbstractSwiftMessage {
      */
     private static final int ONE_BASED_MONTH_MIN_VERSION = 4;
 
-    private static boolean hasNewCalendarFormat(JsonObject obj) {
-        JsonElement v = obj.get("schemaVersion");
-        if (v == null
-                || v.isJsonNull()
-                || !v.isJsonPrimitive()
-                || !v.getAsJsonPrimitive().isNumber()) {
+    private static boolean hasNewCalendarFormat(JsonNode obj) {
+        JsonNode v = obj.get("schemaVersion");
+        if (v == null || v.isNull() || !v.isNumber()) {
             return false;
         }
-        return v.getAsInt() >= ONE_BASED_MONTH_MIN_VERSION;
+        return v.asInt() >= ONE_BASED_MONTH_MIN_VERSION;
     }
 
     /**
