@@ -17,7 +17,9 @@ package com.prowidesoftware.swift.model;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import com.google.gson.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import org.junit.jupiter.api.Test;
@@ -56,16 +58,16 @@ class CalendarJsonSerializationTest {
         m.setLastModified(april);
 
         String json = m.toJson();
-        JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+        JsonNode root = readTree(json);
 
         // month should be 4 (1-based April), not 3 (0-based)
-        JsonObject creationDate = root.getAsJsonObject("creationDate");
-        assertEquals(4, creationDate.get("month").getAsInt(), "April should be month 4 (1-based)");
-        assertEquals(2026, creationDate.get("year").getAsInt());
-        assertEquals(10, creationDate.get("dayOfMonth").getAsInt());
+        JsonNode creationDate = root.get("creationDate");
+        assertEquals(4, creationDate.get("month").asInt(), "April should be month 4 (1-based)");
+        assertEquals(2026, creationDate.get("year").asInt());
+        assertEquals(10, creationDate.get("dayOfMonth").asInt());
 
-        JsonObject lastModified = root.getAsJsonObject("lastModified");
-        assertEquals(4, lastModified.get("month").getAsInt(), "April should be month 4 (1-based)");
+        JsonNode lastModified = root.get("lastModified");
+        assertEquals(4, lastModified.get("month").asInt(), "April should be month 4 (1-based)");
     }
 
     @Test
@@ -76,10 +78,9 @@ class CalendarJsonSerializationTest {
         m.setCreationDate(january);
 
         String json = m.toJson();
-        JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+        JsonNode root = readTree(json);
 
-        assertEquals(
-                1, root.getAsJsonObject("creationDate").get("month").getAsInt(), "January should be month 1 (1-based)");
+        assertEquals(1, root.get("creationDate").get("month").asInt(), "January should be month 1 (1-based)");
     }
 
     @Test
@@ -90,12 +91,9 @@ class CalendarJsonSerializationTest {
         m.setCreationDate(december);
 
         String json = m.toJson();
-        JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+        JsonNode root = readTree(json);
 
-        assertEquals(
-                12,
-                root.getAsJsonObject("creationDate").get("month").getAsInt(),
-                "December should be month 12 (1-based)");
+        assertEquals(12, root.get("creationDate").get("month").asInt(), "December should be month 12 (1-based)");
     }
 
     @Test
@@ -107,11 +105,10 @@ class CalendarJsonSerializationTest {
         m.addStatus(status);
 
         String json = m.toJson();
-        JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+        JsonNode root = readTree(json);
 
-        JsonObject statusDate =
-                root.getAsJsonArray("statusTrail").get(0).getAsJsonObject().getAsJsonObject("creationDate");
-        assertEquals(9, statusDate.get("month").getAsInt(), "September should be month 9 (1-based)");
+        JsonNode statusDate = root.get("statusTrail").get(0).get("creationDate");
+        assertEquals(9, statusDate.get("month").asInt(), "September should be month 9 (1-based)");
     }
 
     @Test
@@ -148,13 +145,13 @@ class CalendarJsonSerializationTest {
         String json = m.toJson();
         assertNotNull(json);
 
-        // The JSON should parse without error; Gson omits null fields by default
-        JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+        // The JSON should parse without error; null fields are omitted by default
+        JsonNode root = readTree(json);
         assertFalse(root.has("creationDate"), "null creationDate should be omitted from JSON");
         assertFalse(root.has("lastModified"), "null lastModified should be omitted from JSON");
 
         // When deserialized, fields default to Calendar.getInstance() since they are
-        // initialized in AbstractSwiftMessage and Gson does not overwrite with null for missing fields
+        // initialized in AbstractSwiftMessage and missing fields are not overwritten with null
         MtSwiftMessage restored = MtSwiftMessage.fromJson(json);
         assertNotNull(restored);
     }
@@ -200,47 +197,44 @@ class CalendarJsonSerializationTest {
         m.setTradeDate(november);
 
         String json = m.toJson();
-        JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+        JsonNode root = readTree(json);
 
-        JsonObject valueDate = root.getAsJsonObject("valueDate");
-        assertEquals(3, valueDate.get("month").getAsInt(), "March should be month 3 (1-based)");
-        assertEquals(2026, valueDate.get("year").getAsInt());
-        assertEquals(20, valueDate.get("dayOfMonth").getAsInt());
+        JsonNode valueDate = root.get("valueDate");
+        assertEquals(3, valueDate.get("month").asInt(), "March should be month 3 (1-based)");
+        assertEquals(2026, valueDate.get("year").asInt());
+        assertEquals(20, valueDate.get("dayOfMonth").asInt());
 
-        JsonObject tradeDate = root.getAsJsonObject("tradeDate");
-        assertEquals(11, tradeDate.get("month").getAsInt(), "November should be month 11 (1-based)");
-        assertEquals(2026, tradeDate.get("year").getAsInt());
-        assertEquals(5, tradeDate.get("dayOfMonth").getAsInt());
+        JsonNode tradeDate = root.get("tradeDate");
+        assertEquals(11, tradeDate.get("month").asInt(), "November should be month 11 (1-based)");
+        assertEquals(2026, tradeDate.get("year").asInt());
+        assertEquals(5, tradeDate.get("dayOfMonth").asInt());
     }
 
     @Test
-    void adapter_serialize_directCall() {
-        CalendarTypeAdapter adapter = CalendarTypeAdapter.INSTANCE;
+    void adapter_serialize_directCall() throws Exception {
         Calendar cal = new GregorianCalendar(2026, Calendar.MARCH, 15, 10, 30, 45);
 
-        JsonElement json = adapter.serialize(cal, Calendar.class, null);
-        JsonObject obj = json.getAsJsonObject();
+        JsonNode obj = adapterMapper().valueToTree(cal);
 
-        assertEquals(2026, obj.get("year").getAsInt());
-        assertEquals(3, obj.get("month").getAsInt(), "March should be 3 (1-based)");
-        assertEquals(15, obj.get("dayOfMonth").getAsInt());
-        assertEquals(10, obj.get("hourOfDay").getAsInt());
-        assertEquals(30, obj.get("minute").getAsInt());
-        assertEquals(45, obj.get("second").getAsInt());
+        assertEquals(2026, obj.get("year").asInt());
+        assertEquals(3, obj.get("month").asInt(), "March should be 3 (1-based)");
+        assertEquals(15, obj.get("dayOfMonth").asInt());
+        assertEquals(10, obj.get("hourOfDay").asInt());
+        assertEquals(30, obj.get("minute").asInt());
+        assertEquals(45, obj.get("second").asInt());
     }
 
     @Test
-    void adapter_deserialize_directCall() {
-        CalendarTypeAdapter adapter = CalendarTypeAdapter.INSTANCE;
-        JsonObject obj = new JsonObject();
-        obj.addProperty("year", 2025);
-        obj.addProperty("month", 7);
-        obj.addProperty("dayOfMonth", 4);
-        obj.addProperty("hourOfDay", 8);
-        obj.addProperty("minute", 20);
-        obj.addProperty("second", 10);
+    void adapter_deserialize_directCall() throws Exception {
+        ObjectNode obj = adapterMapper().createObjectNode();
+        obj.put("year", 2025);
+        obj.put("month", 7);
+        obj.put("dayOfMonth", 4);
+        obj.put("hourOfDay", 8);
+        obj.put("minute", 20);
+        obj.put("second", 10);
 
-        Calendar cal = adapter.deserialize(obj, Calendar.class, null);
+        Calendar cal = adapterMapper().treeToValue(obj, Calendar.class);
 
         assertEquals(2025, cal.get(Calendar.YEAR));
         assertEquals(Calendar.JULY, cal.get(Calendar.MONTH), "JSON month 7 (1-based) should be July");
@@ -252,24 +246,23 @@ class CalendarJsonSerializationTest {
 
     @Test
     void adapter_deserialize_missingRequiredField_throws() {
-        CalendarTypeAdapter adapter = CalendarTypeAdapter.INSTANCE;
-        JsonObject obj = new JsonObject();
-        obj.addProperty("year", 2025);
+        ObjectNode obj = adapterMapper().createObjectNode();
+        obj.put("year", 2025);
         // missing "month" and "dayOfMonth"
 
-        assertThrows(JsonParseException.class, () -> adapter.deserialize(obj, Calendar.class, null));
+        assertThrows(com.fasterxml.jackson.core.JsonProcessingException.class, () -> adapterMapper()
+                .treeToValue(obj, Calendar.class));
     }
 
     @Test
-    void adapter_deserialize_optionalTimeFields_defaultToZero() {
-        CalendarTypeAdapter adapter = CalendarTypeAdapter.INSTANCE;
-        JsonObject obj = new JsonObject();
-        obj.addProperty("year", 2026);
-        obj.addProperty("month", 1);
-        obj.addProperty("dayOfMonth", 1);
+    void adapter_deserialize_optionalTimeFields_defaultToZero() throws Exception {
+        ObjectNode obj = adapterMapper().createObjectNode();
+        obj.put("year", 2026);
+        obj.put("month", 1);
+        obj.put("dayOfMonth", 1);
         // no hourOfDay, minute, second
 
-        Calendar cal = adapter.deserialize(obj, Calendar.class, null);
+        Calendar cal = adapterMapper().treeToValue(obj, Calendar.class);
 
         assertEquals(0, cal.get(Calendar.HOUR_OF_DAY));
         assertEquals(0, cal.get(Calendar.MINUTE));
@@ -281,12 +274,12 @@ class CalendarJsonSerializationTest {
         MtSwiftMessage m = new MtSwiftMessage(FIN);
 
         String json = m.toJson();
-        JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+        JsonNode root = readTree(json);
 
         assertTrue(root.has("schemaVersion"), "toJson output must include the schemaVersion marker");
         assertEquals(
                 AbstractSwiftMessage.JSON_SCHEMA_VERSION,
-                root.get("schemaVersion").getAsInt(),
+                root.get("schemaVersion").asInt(),
                 "schemaVersion must match AbstractSwiftMessage.JSON_SCHEMA_VERSION");
     }
 
@@ -379,5 +372,17 @@ class CalendarJsonSerializationTest {
         assertEquals(14, restored.getCreationDate().get(Calendar.HOUR_OF_DAY));
         assertEquals(30, restored.getCreationDate().get(Calendar.MINUTE));
         assertEquals(45, restored.getCreationDate().get(Calendar.SECOND));
+    }
+
+    private static JsonNode readTree(String json) {
+        try {
+            return new ObjectMapper().readTree(json);
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private static ObjectMapper adapterMapper() {
+        return new ObjectMapper().registerModule(new CalendarTypeAdapter());
     }
 }

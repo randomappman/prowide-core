@@ -15,9 +15,9 @@
  */
 package com.prowidesoftware.swift.model;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.prowidesoftware.JsonSerializable;
 import com.prowidesoftware.swift.utils.Lib;
 import jakarta.persistence.*;
@@ -1422,17 +1422,18 @@ public abstract class AbstractSwiftMessage implements Serializable, JsonSerializ
      * This marker is used by {@link MtSwiftMessage#fromJson(String)} to discriminate the new 1-based-month
      * Calendar format from the legacy 0-based format produced by previous library versions.
      *
-     * @return json serialization using Gson
+     * @return json serialization using Jackson
      * @since 7.10.6
      */
     protected String toJsonImpl() {
-        final Gson gson = new GsonBuilder()
-                .setPrettyPrinting()
-                .registerTypeHierarchyAdapter(Calendar.class, CalendarTypeAdapter.INSTANCE)
-                .create();
-        JsonObject root = gson.toJsonTree(this).getAsJsonObject();
-        root.addProperty("schemaVersion", JSON_SCHEMA_VERSION);
-        return gson.toJson(root);
+        final ObjectMapper mapper = CalendarTypeAdapter.mapper(true);
+        ObjectNode root = mapper.valueToTree(this);
+        root.put("schemaVersion", JSON_SCHEMA_VERSION);
+        try {
+            return mapper.writeValueAsString(root);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Cannot serialize message to JSON", e);
+        }
     }
 
     /**
