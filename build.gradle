@@ -38,7 +38,7 @@ project.version = "${SRU}-${scmVersion.version}"
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(11))
+        languageVersion.set(JavaLanguageVersion.of(21))
     }
 }
 
@@ -94,8 +94,8 @@ tasks.withType(Jar).configureEach {
         'Implementation-Version': project.version,
         'Implementation-Vendor': 'www.prowidesoftware.com',
         'Built-OS': System.getProperty('os.name'),
-        'Source-Compatibility': JavaVersion.VERSION_11,
-        'Target-Compatibility': JavaVersion.VERSION_11,
+        'Source-Compatibility': JavaVersion.VERSION_21,
+        'Target-Compatibility': JavaVersion.VERSION_21,
         'Built-Date': new Date().format("yyyy-MM-dd"),
         'Automatic-Module-Name': 'com.prowidesoftware.core'
     )
@@ -332,21 +332,9 @@ tasks.withType(Test).configureEach {
     }
 }
 
-tasks.register('testOn17', Test) {
-    javaLauncher = javaToolchains.launcherFor {
-        languageVersion = JavaLanguageVersion.of(17)
-    }
-}
-
-tasks.register('testOn21', Test) {
-    javaLauncher = javaToolchains.launcherFor {
-        languageVersion = JavaLanguageVersion.of(21)
-    }
-}
-
-// Runs the suite on a Java 25 toolchain to verify the Java 11 artifacts execute correctly on Java 25.
+// Runs the suite on a Java 25 toolchain to verify the Java 21 artifacts execute correctly on Java 25.
 // Needed to catch JDK-version behavior changes (e.g. JDK 24 tightened the JAXP entity size limits) that
-// cannot manifest on the Java 11/17/21 the build otherwise uses. JDK 25 must be available to the Gradle
+// cannot manifest on the Java 21 the build otherwise uses. JDK 25 must be available to the Gradle
 // toolchain (CI passes -Porg.gradle.java.installations.paths=/pw/dev/jdk25).
 tasks.register('testOn25', Test) {
     description = 'Runs tests using a Java 25 toolchain to verify compatibility'

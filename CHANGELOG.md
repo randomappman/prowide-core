@@ -1,5 +1,8 @@
 # Prowide Core - CHANGELOG
 
+#### 10.3.18 - August 2026
+  * Minimum required Java version is now 21 (the library was previously built for Java 11)
+
 #### 10.3.17 - July 2026
   * (GH-327) Fix: Field 44J serialization now adds the mandatory starting slash in the narrative line when the narrative component is set without it
   * Fix: large XML documents with many escaped characters (e.g. camt/pacs statements) no longer fail to parse on Java 24 and newer JVMs
