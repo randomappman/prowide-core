@@ -52,7 +52,7 @@ Generated code comes from [pw-swift-codegen](../pw-swift-codegen). To change gen
 - Version format: `SRU{YEAR}-{semver}` via Axion Release Plugin (Git tags)
 - A new SRU is generated in a branch ~6 months before SWIFT's production date
 - `.SRU2025.java8-maintenance` / `.SRU2026` sibling working copies exist for active maintenance branches — when in doubt, check `gradle.properties` for the current SRU
-- Java 11+ for current SRU; older branches may require Java 8
+- Java 21+ for current SRU; older branches may require Java 8
 
 ## Conventions
 
