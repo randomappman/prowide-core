@@ -5,7 +5,7 @@ buildscript {
     }
     dependencies {
         classpath 'ru.vyarus:gradle-quality-plugin:6.1.0'
-        classpath 'pl.allegro.tech.build:axion-release-plugin:1.21.3'
+        classpath 'pl.allegro.tech.build:axion-release-plugin:1.19.1'
         classpath 'io.github.gradle-nexus:publish-plugin:2.0.0'
         classpath 'com.diffplug.spotless:spotless-plugin-gradle:7.2.1'
     }
