@@ -1,5 +1,8 @@
 # Prowide Core - CHANGELOG
 
+#### 10.3.18 - SNAPSHOT
+  * Updated commons-lang3 from 3.20.0 to 3.21.0
+
 #### 10.3.17 - July 2026
   * (GH-327) Fix: Field 44J serialization now adds the mandatory starting slash in the narrative line when the narrative component is set without it
   * Fix: large XML documents with many escaped characters (e.g. camt/pacs statements) no longer fail to parse on Java 24 and newer JVMs
